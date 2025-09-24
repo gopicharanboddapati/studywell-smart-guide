@@ -1,107 +1,101 @@
-import { motion } from "framer-motion";
-import { 
-  Home, 
-  Plus, 
-  BarChart3, 
-  PiggyBank, 
-  Settings, 
-  Wallet 
-} from "lucide-react";
-import { Button } from "./ui/button";
+import React from 'react';
+import { Home, Book, Shirt, Heart, User, Settings, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
   currentView: string;
   onViewChange: (view: string) => void;
-  onAddExpense: () => void;
 }
 
 const menuItems = [
-  { id: "dashboard", icon: Home, label: "Dashboard" },
-  { id: "analytics", icon: BarChart3, label: "Analytics" },
-  { id: "savings", icon: PiggyBank, label: "Savings Goals" },
-  { id: "settings", icon: Settings, label: "Settings" },
+  { id: 'home', icon: Home, label: 'Home' },
+  { id: 'books', icon: Book, label: 'Books' },
+  { id: 'tshirts', icon: Shirt, label: 'T-Shirts' },
+  { id: 'wishlist', icon: Heart, label: 'Wishlist' },
+  { id: 'profile', icon: User, label: 'Profile' },
+  { id: 'settings', icon: Settings, label: 'Settings' },
 ];
 
-export const Sidebar = ({ currentView, onViewChange, onAddExpense }: SidebarProps) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
+  currentView,
+  onViewChange
+}) => {
   return (
-    <motion.aside 
-      initial={{ x: -300 }}
-      animate={{ x: 0 }}
-      className="w-64 bg-sidebar-background border-r border-sidebar-border p-6 flex flex-col"
-    >
-      {/* Logo */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="mb-8"
-      >
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-            <Wallet className="w-6 h-6 text-primary-foreground" />
+    <>
+      {/* Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed left-0 top-0 z-50 h-full w-64 bg-sidebar-background border-r border-sidebar-border transform transition-transform duration-300 ease-in-out md:relative md:transform-none",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">BT</span>
+              </div>
+              <span className="font-semibold text-sidebar-foreground">BookTees</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="md:hidden"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <h1 className="text-xl font-bold text-sidebar-foreground">ExpenseTracker</h1>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4">
+            <ul className="space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentView === item.id;
+                
+                return (
+                  <li key={item.id}>
+                    <Button
+                      variant={isActive ? "default" : "ghost"}
+                      className={cn(
+                        "w-full justify-start gap-3 h-12",
+                        isActive && "bg-sidebar-primary text-sidebar-primary-foreground"
+                      )}
+                      onClick={() => {
+                        onViewChange(item.id);
+                        onClose();
+                      }}
+                    >
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-sidebar-border">
+            <div className="text-xs text-sidebar-foreground/60 text-center">
+              © 2024 BookTees Store
+            </div>
+          </div>
         </div>
-      </motion.div>
-
-      {/* Add Expense Button */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mb-8"
-      >
-        <Button 
-          onClick={onAddExpense}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-glow"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Expense
-        </Button>
-      </motion.div>
-
-      {/* Navigation Menu */}
-      <nav className="flex-1">
-        <ul className="space-y-2">
-          {menuItems.map((item, index) => {
-            const isActive = currentView === item.id;
-            return (
-              <motion.li 
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-              >
-                <button
-                  onClick={() => onViewChange(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
-                    isActive 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-neon" 
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  }`}
-                >
-                  <item.icon className={`w-5 h-5 transition-colors duration-200 ${
-                    isActive ? "text-primary" : "group-hover:text-primary"
-                  }`} />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              </motion.li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      {/* Footer */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="mt-8 pt-6 border-t border-sidebar-border"
-      >
-        <div className="text-sm text-muted-foreground text-center">
-          Made with ❤️ for better finances
-        </div>
-      </motion.div>
-    </motion.aside>
+      </aside>
+    </>
   );
 };

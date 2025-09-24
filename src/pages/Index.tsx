@@ -1,55 +1,92 @@
 import { useState } from "react";
+import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
-import { ExpenseCarousel } from "../components/ExpenseCarousel";
-import { AIChat } from "../components/AIChat";
-import { AddExpenseModal } from "../components/AddExpenseModal";
-import { AnalyticsView } from "../components/AnalyticsView";
-import { SavingsGoals } from "../components/SavingsGoals";
+import { ProductGrid } from "../components/ProductGrid";
+import { CategoryFilter } from "../components/CategoryFilter";
+import { ProductDetail } from "../components/ProductDetail";
+import { Cart } from "../components/Cart";
+import { Chatbot } from "../components/Chatbot";
+import { allProducts, Product } from "../data/products";
 
 export default function Index() {
-  const [currentView, setCurrentView] = useState("dashboard");
-  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [currentView, setCurrentView] = useState("home");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeSubcategory, setActiveSubcategory] = useState("all");
 
-  const renderView = () => {
-    switch (currentView) {
-      case "analytics":
-        return <AnalyticsView />;
-      case "savings":
-        return <SavingsGoals />;
-      case "settings":
-        return (
-          <div className="p-8 text-center">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Settings</h1>
-            <p className="text-muted-foreground">Settings coming soon...</p>
-          </div>
-        );
-      default:
-        return <ExpenseCarousel />;
-    }
-  };
+  const filteredProducts = allProducts.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (product.author && product.author.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesCategory = activeCategory === "all" || product.category === activeCategory;
+    const matchesSubcategory = activeSubcategory === "all" || product.subcategory === activeSubcategory;
+    
+    return matchesSearch && matchesCategory && matchesSubcategory;
+  });
+
+  if (selectedProduct) {
+    return <ProductDetail product={selectedProduct} onBack={() => setSelectedProduct(null)} />;
+  }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar Navigation */}
-      <Sidebar 
-        currentView={currentView} 
-        onViewChange={setCurrentView}
-        onAddExpense={() => setIsAddExpenseOpen(true)}
+    <div className="min-h-screen bg-background">
+      <Header
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onCartClick={() => setIsCartOpen(true)}
+        onMenuClick={() => setIsSidebarOpen(true)}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {renderView()}
-      </main>
+      <div className="flex">
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+        />
 
-      {/* AI Chatbot */}
-      <AIChat />
+        <main className="flex-1 p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <aside className="lg:w-64">
+                <CategoryFilter
+                  activeCategory={activeCategory}
+                  activeSubcategory={activeSubcategory}
+                  onCategoryChange={(category) => {
+                    setActiveCategory(category);
+                    setActiveSubcategory("all");
+                  }}
+                  onSubcategoryChange={setActiveSubcategory}
+                />
+              </aside>
 
-      {/* Add Expense Modal */}
-      <AddExpenseModal 
-        isOpen={isAddExpenseOpen}
-        onClose={() => setIsAddExpenseOpen(false)}
-      />
+              <div className="flex-1">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold mb-2">
+                    {activeCategory === "all" ? "All Products" : 
+                     activeCategory === "books" ? "Books" : "T-Shirts"}
+                  </h1>
+                  <p className="text-muted-foreground">
+                    {filteredProducts.length} products found
+                  </p>
+                </div>
+
+                <ProductGrid
+                  products={filteredProducts}
+                  onProductClick={setSelectedProduct}
+                />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <Chatbot />
     </div>
   );
 }
